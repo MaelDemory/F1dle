@@ -5,12 +5,10 @@ import Drivers from './pages/Drivers';
 
 function App() {
     return (
-        <Router>
-            <Routes>
-                <Route path="/" element={<WelcomePage />} />
-                <Route path="/drivers" element={<Drivers />} />
-            </Routes>
-        </Router>
+        <Routes>
+            <Route path="/drivers" element={<Drivers />} />
+            <Route path="/" element={<WelcomePage />} />
+        </Routes>
     );
 }
 
