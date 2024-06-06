@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { fetchDrivers } from '../api/f1dleApi';
 import { Driver } from '../types';
+import {ThreeDots} from "react-loader-spinner";
 
 const Drivers = () => {
     const [drivers, setDrivers] = useState<Driver[]>([]);
@@ -13,37 +14,50 @@ const Drivers = () => {
 
     return (
         <div className="bg-slate-950 text-white min-h-screen max-w-full font-sans flex items-center justify-center">
-            <div
-                className="w-full max-w-md p-4 bg-white border border-gray-200 rounded-lg shadow sm:p-8 dark:bg-gray-800 dark:border-gray-700 mt-2 mb-2">
-                <div className="flex items-center justify-between mb-4">
-                    <h5 className="text-xl font-bold leading-none text-gray-900 dark:text-white">Drivers</h5>
+            {!drivers.length ? (
+                <div className={"flex justify-center items-center h-screen"}>
+                    <ThreeDots
+                        color="#4C0519"
+                        height={80}
+                        width={80}
+                    />
                 </div>
-                <div className="flow-root">
-                    <ul role="list" className="divide-y divide-gray-200 dark:divide-gray-700">
+            ) : (
+                <div
+                    className="w-full max-w-md p-4 bg-white border border-gray-200 rounded-lg shadow sm:p-8 dark:bg-gray-800 dark:border-gray-700 mt-2 mb-2">
+                    <div className="flex items-center justify-between mb-4">
+                        <h5 className="text-xl font-bold leading-none text-gray-900 dark:text-white">Drivers</h5>
+                    </div>
+                    <div className="flow-root">
+                        <ul role="list" className="divide-y divide-gray-200 dark:divide-gray-700">
 
-                        {drivers.map((driver, index) => (
+                            {drivers.map((driver, index) => (
 
-                            <li className="py-3 sm:py-4">
-                                <div className="flex items-center">
-                                    <div className="flex-1 min-w-0 ms-4">
-                                        <p className="text-sm font-medium text-gray-900 truncate dark:text-white">
-                                            {driver.surname} {driver.name}
-                                        </p>
-                                        <p className="text-sm text-gray-500 truncate dark:text-gray-400">
-                                            {driver.nationality}
-                                        </p>
+                                <li className="py-3 sm:py-4">
+                                    <div className="flex items-center">
+                                        <div className="flex-1 min-w-0 ms-4">
+                                            <p className="text-sm font-medium text-gray-900 truncate dark:text-white">
+                                                {driver.surname} {driver.name}
+                                            </p>
+                                            <p className="text-sm text-gray-500 truncate dark:text-gray-400">
+                                                {driver.nationality}
+                                            </p>
+                                        </div>
+                                        <div
+                                            className="inline-flex items-center text-base font-semibold text-gray-900 dark:text-white">
+                                            {driver.win}
+                                        </div>
                                     </div>
-                                    <div
-                                        className="inline-flex items-center text-base font-semibold text-gray-900 dark:text-white">
-                                        {driver.win}
-                                    </div>
-                                </div>
-                            </li>
-                        ))}
+                                </li>
+                            ))}
 
-                    </ul>
+                        </ul>
+                    </div>
                 </div>
-            </div>
+            )
+
+            }
+
         </div>
 
 

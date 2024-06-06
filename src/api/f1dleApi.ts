@@ -4,6 +4,15 @@ const BASE_URL = "http://localhost:8000/api"
 
 export const fetchDrivers = async (): Promise<Driver[]> => {
     const url = `${BASE_URL}/drivers`
+    return fetchData(url);
+};
+
+export const fetchRandomDriver = async (): Promise<Driver> => {
+    const url = `${BASE_URL}/random`
+    return fetchData(url);
+}
+
+export const fetchData = async (url: string): Promise<any> => {
     return fetch(url, {
         method: 'GET',
         headers: {
@@ -19,4 +28,4 @@ export const fetchDrivers = async (): Promise<Driver[]> => {
             }
         })
         .catch(error => Promise.reject(new Error(error.message)));
-};
+}

@@ -1,12 +1,13 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { WelcomePage } from './pages';
+import {Game, WelcomePage} from './pages';
 import Drivers from './pages/Drivers';
+import {Route, Routes} from "react-router-dom";
 
 function App() {
     return (
         <Routes>
             <Route path="/drivers" element={<Drivers />} />
+            <Route path="/game" element={<Game />} />
             <Route path="/" element={<WelcomePage />} />
         </Routes>
     );
