@@ -56,12 +56,15 @@ the `API_UPSTREAM` environment variable, interpolated into
 
 ## Full documentation
 
-The architecture map, the Fly.io deployment procedure and the design system are
-documented one level up, in the workspace that holds this repository alongside
-the API's, next to `docker-compose.yml`:
+Project-wide documentation lives in [`docs/`](docs/) — it covers both this
+repository and the API's, and is written in French:
 
-- `README.md` — features, architecture, API, seeding, deployment
-- `DEPLOY.md` — Fly.io procedure, secrets, known pitfalls
-- `DESIGN.md` — tokens, primitives, adaptivity rules
+- **[docs/PROJECT.md](docs/PROJECT.md)** — features, architecture, API,
+  seeding, deployment
+- **[docs/DEPLOY.md](docs/DEPLOY.md)** — Fly.io procedure, secrets, known
+  pitfalls
+- **[docs/DESIGN.md](docs/DESIGN.md)** — tokens, primitives, adaptivity rules
 
-Those files are not versioned in this repository.
+`docker-compose.yml` at the root brings up the whole stack — MySQL, the API and
+this frontend. It expects the API repository checked out as a sibling directory
+named `F1dle-API`.

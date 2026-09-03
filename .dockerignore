@@ -10,3 +10,10 @@ README.md
 .env.production.local
 Dockerfile
 .dockerignore
+
+# Documentation and orchestration: never referenced by the Dockerfile, so they
+# only bloat the build context. nginx.conf.template is NOT listed — the
+# production stage copies it.
+docs
+docker-compose.yml
+fly.toml

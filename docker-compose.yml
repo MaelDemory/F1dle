@@ -1,0 +1,79 @@
+# F1dle — local stack: MySQL, the Laravel API and this React frontend.
+#
+# The API lives in a separate repository. Check the two out as siblings, so the
+# `../F1dle-API` build context below resolves:
+#
+#   parent/
+#   ├── F1dle/          (this repository — run `docker compose up` from here)
+#   └── F1dle-API/      git clone https://github.com/MaelDemory/F1dle-API.git
+#
+# The Prometheus/Grafana stack is not included: it is opt-in, lives in
+# docker-compose.monitoring.yml, and needs the monitoring/ config tree — neither
+# of which is versioned here. See docs/PROJECT.md.
+#
+# Credentials below are local-development values only. Production runs on
+# Fly.io and takes them from Fly secrets — see docs/DEPLOY.md.
+services:
+  # MySQL Database
+  db:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: secret
+      MYSQL_DATABASE: f1dle
+      MYSQL_USER: f1dle
+      MYSQL_PASSWORD: f1dle_password
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-psecret"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # Laravel API Backend
+  api:
+    build:
+      context: ../F1dle-API
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "8000:80"
+    environment:
+      APP_NAME: F1dle
+      APP_ENV: production
+      # Local development key only. Production uses a Fly secret (see DEPLOY.md).
+      APP_KEY: base64:NxK23liaYh/12lA1QM0psGTjP6R4FRHVQGU4na1TrvU=
+      APP_DEBUG: "false"
+      APP_URL: http://localhost:8000
+      DB_CONNECTION: mysql
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_DATABASE: f1dle
+      DB_USERNAME: f1dle
+      DB_PASSWORD: f1dle_password
+      CACHE_STORE: file
+      SESSION_DRIVER: file
+      QUEUE_CONNECTION: sync
+      FRONTEND_URL: http://localhost:3000
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # React Frontend
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        REACT_APP_API_URL: /api
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      - api
+
+volumes:
+  db_data:
