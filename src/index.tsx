@@ -4,15 +4,24 @@ import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 import {HashRouter} from "react-router-dom";
+import {MotionConfig} from 'motion/react';
+import {LanguageProvider} from './i18n/LanguageContext';
+import {ThemeProvider} from './theme/ThemeContext';
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
 );
 root.render(
   <React.StrictMode>
-      <HashRouter>
-          <App />
-      </HashRouter>
+    <MotionConfig reducedMotion="user">
+      <ThemeProvider>
+        <LanguageProvider>
+          <HashRouter>
+            <App />
+          </HashRouter>
+        </LanguageProvider>
+      </ThemeProvider>
+    </MotionConfig>
   </React.StrictMode>
 );
 

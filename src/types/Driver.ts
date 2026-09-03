@@ -5,6 +5,8 @@ export interface Driver {
     birth_date: string;
     nationality: string;
     team: string;
+    team_logo_base64?: string | null;
+    team_logo_mime_type?: string | null;
     win: number;
     pole: number;
     first_entry: number;
