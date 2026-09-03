@@ -17,7 +17,7 @@ repository: **[MaelDemory/F1dle-API](https://github.com/MaelDemory/F1dle-API)**.
 | Constructor grid | `/constructor-grid` |
 | Higher or Lower | `/higher-lower` |
 | Connections | `/connections` |
-| Driver browser — current grid and All Time | `/drivers` |
+| Driver browser — current grid and All Time, with a full driver profile on click | `/drivers` |
 | Season results, 1950–2024 | `/results` |
 
 Light / dark / system theme, and a fully translated EN/FR interface.
@@ -33,7 +33,7 @@ lucide-react · in-house primitives in the shadcn/ui style
 npm install
 REACT_APP_API_URL=http://localhost:8000/api npm start   # http://localhost:3000
 
-CI=true npm test        # 79 tests
+CI=true npm test        # 91 tests
 npx tsc --noEmit
 npm run build
 ```

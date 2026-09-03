@@ -282,6 +282,14 @@ type TranslationTree = {
         sortBy: string;
         teamHistory: string;
         resetFilters: string;
+        poles: string;
+        podiums: string;
+        fastestLaps: string;
+        birthDate: string;
+        nationality: string;
+        code: string;
+        profile: string;
+        careerSpan: string;
     };
     results: {
         title: string;
@@ -585,7 +593,15 @@ export const translations: Record<Language, TranslationTree> = {
             lastSeason: 'Last season',
             sortBy: 'Sort by',
             teamHistory: 'Career teams',
-            resetFilters: 'Clear filters'
+            resetFilters: 'Clear filters',
+            poles: 'Poles',
+            podiums: 'Podiums',
+            fastestLaps: 'Fastest laps',
+            birthDate: 'Born',
+            nationality: 'Nationality',
+            code: 'Code',
+            profile: 'Driver profile',
+            careerSpan: 'Career'
         },
         results: {
             title: 'Race Results',
@@ -887,7 +903,15 @@ export const translations: Record<Language, TranslationTree> = {
             lastSeason: 'Dernière saison',
             sortBy: 'Trier par',
             teamHistory: 'Ecuries en carrière',
-            resetFilters: 'Effacer les filtres'
+            resetFilters: 'Effacer les filtres',
+            poles: 'Poles',
+            podiums: 'Podiums',
+            fastestLaps: 'Meilleurs tours',
+            birthDate: 'Naissance',
+            nationality: 'Nationalité',
+            code: 'Code',
+            profile: 'Fiche pilote',
+            careerSpan: 'Carrière'
         },
         results: {
             title: 'Résultats des courses',

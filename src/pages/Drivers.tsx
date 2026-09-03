@@ -2,7 +2,9 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { motion } from 'motion/react';
 import { fetchDrivers, fetchTeams, TeamRecord } from '../api/f1dleApi';
 import { Driver, HistoricalDriver } from '../types';
-import { Pagination, TeamsHistoryModal } from '../components';
+import { Pagination } from '../components';
+import { DriverDetailCard } from '../components/drivers/DriverDetailCard';
+import { currentDriverDetail, historicalDriverDetail } from '../drivers/detail';
 import {
     Badge,
     Button,
@@ -53,7 +55,7 @@ const getDriverInitials = (driver: HistoricalDriver) => {
 const getDecade = (year: number) => Math.floor(year / 10) * 10;
 
 const Drivers = () => {
-    const { t } = useLanguage();
+    const { t, language } = useLanguage();
     const [viewMode, setViewMode] = useState<ViewMode>('current');
     const [currentDrivers, setCurrentDrivers] = useState<Driver[]>([]);
     const [query, setQuery] = useState('');
@@ -69,7 +71,33 @@ const Drivers = () => {
     const [sortField, setSortField] = useState<SortField>('wins');
     const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
     const [teamRecords, setTeamRecords] = useState<Map<string, TeamRecord>>(new Map());
-    const [modalDriver, setModalDriver] = useState<HistoricalDriver | null>(null);
+    // One selection for both shapes: which record is open, and which adapter
+    // reads it. Storing the raw record rather than the adapted detail keeps the
+    // translated labels current when the language changes while the card is open.
+    const [selected, setSelected] = useState<
+        { kind: 'current'; driver: Driver } | { kind: 'historical'; driver: HistoricalDriver } | null
+    >(null);
+
+    const detailLabels = useMemo(
+        () => ({
+            wins: t.drivers.wins,
+            titles: t.drivers.titles,
+            podiums: t.drivers.podiums,
+            poles: t.drivers.poles,
+            points: t.drivers.points,
+            entries: t.drivers.entries,
+            fastestLaps: t.drivers.fastestLaps,
+            seasons: t.drivers.seasons,
+            firstEntry: t.drivers.firstEntry,
+            lastSeason: t.drivers.lastSeason,
+            lastTeam: t.drivers.lastTeam,
+            birthDate: t.drivers.birthDate,
+            nationality: t.drivers.nationality,
+            code: t.drivers.code,
+            careerSpan: t.drivers.careerSpan
+        }),
+        [t]
+    );
 
     const { drivers: historicalDrivers, loading: histLoading, progress, error: histError } = useHistoricalDrivers(viewMode === 'alltime');
 
@@ -252,7 +280,25 @@ const Drivers = () => {
                                         const teamLogoSrc = getTeamLogoSrc(driver);
 
                                         return (
-                                            <MotionCard key={driver.id_driver} variants={staggerItem} padding="sm">
+                                            <MotionCard
+                                                key={driver.id_driver}
+                                                variants={staggerItem}
+                                                padding="sm"
+                                                className="relative transition-colors hover:bg-surface-raised"
+                                            >
+                                                {/*
+                                                  An overlay button rather than a wrapper: <button> cannot
+                                                  legally contain the heading below, and a div with
+                                                  role="button" would re-create a native control. This keeps
+                                                  the whole card as one large, keyboard-reachable target with
+                                                  a screen-reader name.
+                                                */}
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setSelected({ kind: 'current', driver })}
+                                                    aria-label={`${driver.surname} ${driver.name} — ${t.drivers.profile}`}
+                                                    className="absolute inset-0 z-10 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                                                />
                                                 <div className="flex items-start justify-between gap-3">
                                                     <div className="flex min-w-0 items-start gap-3">
                                                         <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-md border border-border bg-surface-raised p-1.5">
@@ -444,7 +490,26 @@ const Drivers = () => {
                                 <>
                                     <motion.section {...gridMotionProps} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                                         {paginatedHistorical.map((driver) => (
-                                            <MotionCard key={driver.driverId} variants={staggerItem} padding="sm">
+                                            <MotionCard
+                                                key={driver.driverId}
+                                                variants={staggerItem}
+                                                padding="sm"
+                                                className="relative transition-colors hover:bg-surface-raised"
+                                            >
+                                                {/*
+                                                  An overlay button rather than a wrapper: <button> cannot
+                                                  legally contain the heading below, and a div with
+                                                  role="button" would re-create a native control. This keeps
+                                                  the whole card as one large, keyboard-reachable target with
+                                                  a screen-reader name.
+                                                */}
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setSelected({ kind: 'historical', driver })}
+                                                    aria-label={`${driver.givenName} ${driver.familyName} — ${t.drivers.profile}`}
+                                                    className="absolute inset-0 z-10 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                                                />
+
                                                 <div className="flex items-start justify-between gap-3">
                                                     <div className="flex min-w-0 items-start gap-3">
                                                         <div className="flex h-12 w-12 shrink-0 flex-col items-center justify-center gap-0.5 rounded-md border border-border bg-surface-raised">
@@ -478,15 +543,12 @@ const Drivers = () => {
                                                 </div>
 
                                                 {driver.teamsHistory.length > 0 && (
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        className="-ml-2 mt-2"
-                                                        onClick={() => setModalDriver(driver)}
-                                                    >
-                                                        {t.drivers.teamHistory}
-                                                        <span className="font-semibold text-foreground">{driver.teamsHistory.length}</span>
-                                                    </Button>
+                                                    <p className="mt-3 text-caption text-tertiary">
+                                                        {t.drivers.teamHistory}{' '}
+                                                        <span className="font-semibold text-secondary">
+                                                            {driver.teamsHistory.length}
+                                                        </span>
+                                                    </p>
                                                 )}
                                             </MotionCard>
                                         ))}
@@ -508,12 +570,20 @@ const Drivers = () => {
             )}
         </PageShell>
 
-        {modalDriver && (
-            <TeamsHistoryModal
-                driverName={`${modalDriver.givenName} ${modalDriver.familyName}`}
-                teamsHistory={modalDriver.teamsHistory}
-                teamRecords={teamRecords}
-                onClose={() => setModalDriver(null)}
+        {selected && (
+            <DriverDetailCard
+                detail={
+                    selected.kind === 'current'
+                        ? currentDriverDetail(selected.driver, detailLabels, language)
+                        : historicalDriverDetail(selected.driver, detailLabels, language)
+                }
+                teamLogos={teamRecords}
+                labels={{
+                    eyebrow: t.drivers.profile,
+                    teamHistory: t.drivers.teamHistory,
+                    close: t.common.close
+                }}
+                onClose={() => setSelected(null)}
             />
         )}
         </>

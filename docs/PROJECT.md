@@ -63,6 +63,20 @@ Tous les modes : autocomplétion, confettis, modal de victoire, interface EN/FR.
 ### Pilotes — `/drivers`
 - **Grille actuelle** : statistiques des pilotes en activité (victoires, titres, points, courses)
 - **All Time** : tous les pilotes depuis 1950, avec filtres par nationalité, décennie, champions/vainqueurs seulement ; tri par victoires, points ou saisons ; historique d'équipes
+- **Fiche pilote** : un clic sur une carte ouvre le détail complet du pilote — identité, chiffres clés en tuiles, champs secondaires, et historique d'écuries avec logos
+
+La fiche sert les deux formes de données via un adaptateur commun
+(`src/drivers/detail.ts`), les sources différant réellement : la grille actuelle
+porte poles, podiums et meilleurs tours mais une seule équipe, tandis que le
+registre historique porte l'historique d'écuries complet mais aucun de ces
+compteurs. Les sections sans donnée sont omises, jamais rendues vides.
+
+Elle **absorbe** l'ancienne modal d'historique d'écuries plutôt que de l'ouvrir :
+empiler deux modales masque le contexte de la première. Le déclencheur est un
+bouton en superposition sur la carte — un `<button>` ne peut pas contenir le
+titre de niveau 2 qu'affiche la carte, et un `div role="button"` recréerait un
+contrôle natif ; la superposition donne une cible unique, large, atteignable au
+clavier et nommée pour les lecteurs d'écran.
 
 ### Résultats de saisons — `/results`
 - Parcourir les résultats course par course de 1950 à 2024 (75 saisons, 1 114 courses en base)
@@ -91,7 +105,7 @@ Tous les modes : autocomplétion, confettis, modal de victoire, interface EN/FR.
 | Conteneurisation | Docker, Docker Compose |
 | Serveur web | Nginx (Alpine) |
 | Animations | Motion (ex Framer Motion) v12 · View Transitions API |
-| Tests | Jest + React Testing Library (79 tests) |
+| Tests | Jest + React Testing Library (91 tests) |
 | Déploiement | Fly.io (3 apps, région `cdg`) |
 | Monitoring | Prometheus, Grafana |
 | Exporters | mysqld-exporter, nginx-exporter |
@@ -364,7 +378,7 @@ c'est ce découpage qui les rend possibles.
 
 ```bash
 cd F1dle
-CI=true npm test            # 79 tests
+CI=true npm test            # 91 tests
 npx tsc --noEmit            # vérification de types
 npm run build               # build de production
 ```
@@ -379,6 +393,7 @@ npm run build               # build de production
 | `game/modes/byTeams.test.tsx` | L'identité du plateau Par écuries, dont ses termes de recherche d'avant migration |
 | `game/useGuessRoundFromPool.test.ts` | Que la réponse tirée appartient toujours au vivier, le signalement d'un vivier vide, et la variété des tirages |
 | `api/currentGridPool.test.ts` | Que la saison courante est déduite de la donnée et non du calendrier |
+| `drivers/detail.test.ts` | Les deux adaptateurs de fiche pilote : chiffres mis en avant, substitution saisons/participations, omission des champs absents, formatage de date par langue |
 | `theme/theme.test.ts` | Que `system` ne pose aucune classe, et le rejet d'une valeur de `localStorage` corrompue |
 | `theme/ThemeContext.test.tsx` | Application et retrait des classes, persistance, `theme-color`, et le chemin animé qui écrit la classe lui-même |
 | `theme/viewTransition.test.ts` | Les quatre raisons de ne pas animer, dont `prefers-reduced-motion` |

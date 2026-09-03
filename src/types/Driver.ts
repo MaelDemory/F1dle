@@ -9,9 +9,12 @@ export interface Driver {
     team_logo_mime_type?: string | null;
     win: number;
     pole: number;
+    podium: number;
     first_entry: number;
     driver_number: number;
-    fastest_lap: number;
+    // The API field is plural. It was declared as `fastest_lap` and never read,
+    // so the mismatch stayed invisible until the detail card needed the value.
+    fastest_laps: number;
     career_points: number;
     entries: number;
     world_championship: number;
