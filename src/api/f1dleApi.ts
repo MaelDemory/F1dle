@@ -49,6 +49,28 @@ export const fetchHistoricalWinners = async (): Promise<HistoricalDriver[]> => {
     return drivers.filter((d) => d.totalWins >= 1);
 };
 
+/**
+ * Historical records for the drivers on the current grid.
+ *
+ * The current season is read from the data — the highest `lastSeason` present —
+ * rather than from the system clock. A clock-based year would silently return an
+ * empty roster on 1 January, before the season's data has been seeded.
+ *
+ * Sourced from historical_drivers rather than the drivers table because only the
+ * former carries `teamsHistory`, which the teams board needs as its clue.
+ */
+export const fetchCurrentGridHistoricalDrivers = async (): Promise<HistoricalDriver[]> => {
+    const drivers = await fetchHistoricalDrivers();
+
+    if (drivers.length === 0) {
+        return [];
+    }
+
+    const currentSeason = Math.max(...drivers.map((driver) => driver.lastSeason));
+
+    return drivers.filter((driver) => driver.lastSeason === currentSeason);
+};
+
 export const fetchSeasonChampions = async (): Promise<SeasonChampion[]> => {
     return fetchData(`${BASE_URL}/season-champions`);
 };

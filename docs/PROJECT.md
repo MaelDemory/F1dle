@@ -6,7 +6,7 @@ Jeu de devinettes Formula 1 inspiré de Wordle. Devinez le pilote caché en 6 te
 
 > **Périmètre de ce document.** Il décrit le projet complet, réparti sur deux
 > dépôts : [MaelDemory/F1dle](https://github.com/MaelDemory/F1dle) pour le
-> frontend — celui qui contient ce fichier — et
+> frontend, qui héberge aussi ce fichier sous `docs/`, et
 > [MaelDemory/F1dle-API](https://github.com/MaelDemory/F1dle-API) pour l'API.
 >
 > L'arborescence ci-dessous est celle d'un dossier de travail réunissant les
@@ -24,7 +24,7 @@ Jeu de devinettes Formula 1 inspiré de Wordle. Devinez le pilote caché en 6 te
 | Mode | Route | Description |
 |---|---|---|
 | **Classique** | `/game` | Devinez un pilote en 6 essais grâce à ses stats. Deux plateaux au choix (voir ci-dessous) |
-| **Par écuries** | `/guess-by-teams` | Identifiez un pilote historique (≥1 victoire) à partir de toutes les écuries de sa carrière |
+| **Par écuries** | `/guess-by-teams` | Identifiez un pilote à partir de toutes les écuries de sa carrière. Deux plateaux au choix (voir ci-dessous) |
 | **Remplir la grille** | `/fill-the-grid` | Nommez le Champion du Monde F1 pour chaque saison de 2025 à 1950, avec indice et option de passer |
 | **Grille Constructeurs** | `/constructor-grid` | Nommez le champion constructeur de chaque saison |
 | **Duel de stats** | `/higher-lower` | Plus haut ou plus bas : comparez deux pilotes sur une statistique, avec score de série |
@@ -38,6 +38,23 @@ Le mode **Classique** propose deux plateaux, via une bascule en haut de page :
 | **All Time** | **Les 881 pilotes depuis 1950**, sans filtre | Écuries · Nationalité · Points · Saisons · Victoires · Titres |
 
 Deux colonnes diffèrent sur le plateau All Time, par nécessité. `historical_drivers` n'a aucun compteur de courses, donc les **saisons courues** remplacent les participations. Et un pilote historique a souvent piloté pour plusieurs écuries : la colonne **Écuries** passe donc au vert dès qu'une écurie est commune aux deux carrières, une égalité stricte sur la dernière équipe ne matchant presque jamais.
+
+Le mode **Par écuries** propose lui aussi deux plateaux :
+
+| Plateau | Vivier | Indice |
+|---|---|---|
+| **Grille actuelle** | Les 23 pilotes de la saison en cours | Leur historique complet d'écuries |
+| **All Time** | Les 116 pilotes ayant **au moins une victoire** | Idem |
+
+Les deux plateaux lisent `historical_drivers`, et non `drivers` : seule cette
+table porte `teamsHistory`, l'indice du mode — la table de la grille actuelle
+n'a qu'une équipe par pilote. La saison courante est déduite de la donnée (le
+`last_season` le plus élevé) et non de l'horloge, sinon le vivier serait vide au
+1ᵉʳ janvier, avant que la nouvelle saison ne soit peuplée.
+
+Le filtre ≥1 victoire du plateau All Time est **annoncé dans l'interface** :
+sans lui, des centaines de pilotes d'une seule course seraient indevinables
+depuis un badge d'écurie, et le joueur ne pouvait pas deviner cette règle.
 
 Tous les modes : autocomplétion, confettis, modal de victoire, interface EN/FR.
 
@@ -74,7 +91,7 @@ Tous les modes : autocomplétion, confettis, modal de victoire, interface EN/FR.
 | Conteneurisation | Docker, Docker Compose |
 | Serveur web | Nginx (Alpine) |
 | Animations | Motion (ex Framer Motion) v12 · View Transitions API |
-| Tests | Jest + React Testing Library (72 tests) |
+| Tests | Jest + React Testing Library (79 tests) |
 | Déploiement | Fly.io (3 apps, région `cdg`) |
 | Monitoring | Prometheus, Grafana |
 | Exporters | mysqld-exporter, nginx-exporter |
@@ -185,6 +202,13 @@ Navigateur
 **Les contrôleurs ne lisent que la base de données.** Il n'y a aucun repli vers
 l'API Jolpica à la requête : une table vide renvoie une réponse vide. Le
 peuplement est un acte explicite, via les commandes artisan ci-dessous.
+
+Les plateaux du mode Par écuries n'utilisent pas d'endpoint de tirage : ils
+téléchargent leur vivier via `/api/historical-drivers` puis en tirent la réponse
+côté client. C'est ce qui **garantit que la réponse appartient au vivier** — la
+victoire se joue sur une comparaison d'identifiants, donc une réponse absente du
+vivier serait indevinable. Un tirage serveur ferait reposer cette propriété sur
+la coïncidence de deux filtres écrits séparément.
 
 ### Base de données
 
@@ -318,7 +342,7 @@ REACT_APP_API_URL=http://localhost:8000/api npm start   # http://localhost:3000
 |---|---|---|
 | `/api/drivers` | GET | Pilotes de la grille actuelle |
 | `/api/random` | GET | Pilote aléatoire (mode Classique) |
-| `/api/random-historical-winner` | GET | Pilote historique aléatoire avec ≥1 victoire (mode Par écuries) |
+| `/api/random-historical-winner` | GET | Pilote historique aléatoire avec ≥1 victoire |
 | `/api/random-historical-driver` | GET | Pilote historique aléatoire parmi les 881, sans seuil (plateau All Time) |
 | `/api/historical-drivers` | GET | Tous les pilotes depuis 1950 |
 | `/api/teams` | GET | Écuries avec logos |
@@ -340,7 +364,7 @@ c'est ce découpage qui les rend possibles.
 
 ```bash
 cd F1dle
-CI=true npm test            # 72 tests
+CI=true npm test            # 79 tests
 npx tsc --noEmit            # vérification de types
 npm run build               # build de production
 ```
@@ -353,6 +377,8 @@ npm run build               # build de production
 | `game/modes/currentGrid.test.ts` | **Non-régression** : les tons, flèches et libellés du plateau classique, tels qu'avant l'extraction du monolithe |
 | `game/modes/allTime.test.ts` | Les colonnes du plateau All Time, dont les pilotes à une seule course que le vivier non filtré contient |
 | `game/modes/byTeams.test.tsx` | L'identité du plateau Par écuries, dont ses termes de recherche d'avant migration |
+| `game/useGuessRoundFromPool.test.ts` | Que la réponse tirée appartient toujours au vivier, le signalement d'un vivier vide, et la variété des tirages |
+| `api/currentGridPool.test.ts` | Que la saison courante est déduite de la donnée et non du calendrier |
 | `theme/theme.test.ts` | Que `system` ne pose aucune classe, et le rejet d'une valeur de `localStorage` corrompue |
 | `theme/ThemeContext.test.tsx` | Application et retrait des classes, persistance, `theme-color`, et le chemin animé qui écrit la classe lui-même |
 | `theme/viewTransition.test.ts` | Les quatre raisons de ne pas animer, dont `prefers-reduced-motion` |

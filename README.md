@@ -12,7 +12,7 @@ repository: **[MaelDemory/F1dle-API](https://github.com/MaelDemory/F1dle-API)**.
 | Mode | Route |
 |---|---|
 | Classic — current grid or **All Time** (all 881 drivers since 1950) | `/game` |
-| Guess by teams | `/guess-by-teams` |
+| Guess by teams — current grid or **All Time** (race winners) | `/guess-by-teams` |
 | Fill the Grid — world champions | `/fill-the-grid` |
 | Constructor grid | `/constructor-grid` |
 | Higher or Lower | `/higher-lower` |
@@ -33,7 +33,7 @@ lucide-react · in-house primitives in the shadcn/ui style
 npm install
 REACT_APP_API_URL=http://localhost:8000/api npm start   # http://localhost:3000
 
-CI=true npm test        # 72 tests
+CI=true npm test        # 79 tests
 npx tsc --noEmit
 npm run build
 ```

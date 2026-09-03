@@ -132,6 +132,14 @@ type TranslationTree = {
         title: string;
         mode: string;
         loading: string;
+        modeCurrent: string;
+        modeAllTime: string;
+        currentTitle: string;
+        currentMode: string;
+        allTimeTitle: string;
+        allTimeMode: string;
+        winnersOnlyHint: string;
+        emptyPool: string;
         placeholder: string;
         teamsClue: string;
         wrongGuess: string;
@@ -425,6 +433,14 @@ export const translations: Record<Language, TranslationTree> = {
             modalDescription: 'The board is solved. Confetti is on. Launch another round when you want a new target.'
         },
         guessByTeams: {
+            modeCurrent: 'Current grid',
+            modeAllTime: 'All Time',
+            currentTitle: 'Guess a driver on the current grid from their teams.',
+            currentMode: 'Current grid',
+            allTimeTitle: 'Guess a race winner from their teams.',
+            allTimeMode: 'All Time',
+            winnersOnlyHint: 'The hidden driver has at least one race win.',
+            emptyPool: 'No driver available for this board.',
             title: 'Guess the driver from their teams.',
             mode: 'Teams mode',
             loading: 'Loading a winning driver',
@@ -719,6 +735,14 @@ export const translations: Record<Language, TranslationTree> = {
             modalDescription: 'La grille est résolue. Les confettis tombent. Lance une nouvelle manche quand tu veux une autre cible.'
         },
         guessByTeams: {
+            modeCurrent: 'Grille actuelle',
+            modeAllTime: 'All Time',
+            currentTitle: 'Devine un pilote de la grille actuelle grâce à ses écuries.',
+            currentMode: 'Grille actuelle',
+            allTimeTitle: 'Devine un vainqueur de Grand Prix grâce à ses écuries.',
+            allTimeMode: 'All Time',
+            winnersOnlyHint: 'Le pilote à trouver a au moins une victoire en course.',
+            emptyPool: 'Aucun pilote disponible pour ce plateau.',
             title: 'Devine le pilote grâce à ses écuries.',
             mode: 'Mode écuries',
             loading: 'Chargement d\'un pilote vainqueur',

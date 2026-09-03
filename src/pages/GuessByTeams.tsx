@@ -1,37 +1,45 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { HistoricalDriver } from '../types';
-import { fetchHistoricalWinners, fetchRandomHistoricalWinner } from '../api/f1dleApi';
+import { fetchCurrentGridHistoricalDrivers, fetchHistoricalWinners } from '../api/f1dleApi';
 import { byTeamsIdentity } from '../game/modes/byTeams';
 import { LIST_VICTORY_REVEAL_DELAY_MS } from '../game/timings';
-import { useGuessRound } from '../game/useGuessRound';
+import { useGuessRoundFromPool } from '../game/useGuessRoundFromPool';
 import { useGuessSession } from '../game/useGuessSession';
 import { useTeamLogos } from '../hooks/useTeamLogos';
 import { GuessSearchPanel } from '../components/guess/GuessSearchPanel';
 import { GuessVerdictList } from '../components/guess/GuessVerdictList';
 import { TeamsCluePanel } from '../components/guess/TeamsCluePanel';
 import { VictoryDialog } from '../components/guess/VictoryDialog';
-import { ErrorState, LoadingState, PageHeader, PageShell } from '../components/ui';
+import { ErrorState, LoadingState, PageHeader, PageShell, SegmentedControl } from '../components/ui';
 import { useLanguage } from '../i18n/LanguageContext';
 
-type BoardProps = {
+/**
+ * `current` draws from the drivers racing this season; `alltime` from every race
+ * winner since 1950. Both boards read the same historical records — only the
+ * pool differs — because `teamsHistory` is the clue and the current-grid table
+ * carries a single team per driver.
+ */
+type Board = 'current' | 'alltime';
+
+type TeamsBoardProps = {
     answer: HistoricalDriver;
     pool: HistoricalDriver[];
-    loadError?: string;
+    hint?: string;
     onPlayAgain: () => void;
 };
 
 /**
  * Parameters
- *   answer, pool, loadError — the round's data. onPlayAgain — starts a new round.
+ *   answer, pool — the round's data. hint — the pool's constraint, shown with
+ *   the clue. onPlayAgain — starts a new round.
  * What it does
- *   Renders the teams board. The clue is the hidden driver's team history, and a
- *   guess is revealed as simply right or wrong — there is no column comparison,
- *   which is the one thing this board does not share with the grid games. Every
- *   rule it does share comes from useGuessSession.
+ *   Renders the teams board: the clue is the hidden driver's team history, and a
+ *   guess is revealed as simply right or wrong. Every shared rule — attempts,
+ *   duplicates, autocomplete, victory — comes from useGuessSession.
  * Output
  *   The victory dialog, the clue panel, the search panel and the verdict list.
  */
-const Board = ({ answer, pool, loadError, onPlayAgain }: BoardProps) => {
+const TeamsBoard = ({ answer, pool, hint, onPlayAgain }: TeamsBoardProps) => {
     const { t } = useLanguage();
     const logos = useTeamLogos();
 
@@ -42,7 +50,6 @@ const Board = ({ answer, pool, loadError, onPlayAgain }: BoardProps) => {
         answer,
         pool,
         revealDelayMs: LIST_VICTORY_REVEAL_DELAY_MS,
-        loadError,
         onPlayAgain
     });
 
@@ -78,6 +85,7 @@ const Board = ({ answer, pool, loadError, onPlayAgain }: BoardProps) => {
                     teams={answer.teamsHistory}
                     logos={logos}
                     label={t.guessByTeams.teamsClue}
+                    hint={hint}
                 />
 
                 <GuessSearchPanel
@@ -93,7 +101,7 @@ const Board = ({ answer, pool, loadError, onPlayAgain }: BoardProps) => {
                     renderSuggestionBadge={identity.renderSuggestionBadge}
                     guessCount={session.guesses.length}
                     isComplete={session.isComplete}
-                    canSubmit={!session.isComplete && !loadError}
+                    canSubmit={!session.isComplete}
                     status={session.status}
                     labels={{
                         panel: t.search.panel,
@@ -115,52 +123,86 @@ const Board = ({ answer, pool, loadError, onPlayAgain }: BoardProps) => {
 
 /**
  * Parameters
- *   onPlayAgain — starts a new round.
+ *   board — which pool to play. onPlayAgain — starts a new round.
  * What it does
- *   Resolves the round's data and picks the screen that follows: loading, a fatal
- *   error, or the board. Mirrors GuessRound, but is local because this board is
- *   not a column grid and so cannot use that component's GuessGame.
+ *   Resolves the round's data and picks the screen that follows: loading, a
+ *   fatal error, or the board. The answer is drawn from the pool it fetched,
+ *   which is what guarantees it can be guessed.
  * Output
  *   The loading state, the error state, or the board.
  */
-const Round = ({ onPlayAgain }: { onPlayAgain: () => void }) => {
+const Round = ({ board, onPlayAgain }: { board: Board; onPlayAgain: () => void }) => {
     const { t } = useLanguage();
-    const { answer, pool, isLoading, answerError, poolError } = useGuessRound(
-        fetchRandomHistoricalWinner,
-        fetchHistoricalWinners
+    const isAllTime = board === 'alltime';
+
+    const { answer, pool, isLoading, error } = useGuessRoundFromPool(
+        isAllTime ? fetchHistoricalWinners : fetchCurrentGridHistoricalDrivers
     );
 
     if (isLoading) {
         return <LoadingState label={t.guessByTeams.loading} />;
     }
 
-    if (answerError || !answer) {
+    if (error || !answer) {
         return (
             <ErrorState
                 title={t.search.dataErrorTitle}
-                message={answerError || t.search.dataErrorDescription}
+                message={error === 'empty-pool' ? t.guessByTeams.emptyPool : error || t.search.dataErrorDescription}
                 retryLabel={t.common.retry}
                 onRetry={onPlayAgain}
             />
         );
     }
 
-    return <Board answer={answer} pool={pool} loadError={poolError} onPlayAgain={onPlayAgain} />;
+    return (
+        <TeamsBoard
+            answer={answer}
+            pool={pool}
+            // Only the All Time board narrows its pool by a rule the player
+            // cannot see, so only it needs spelling out.
+            hint={isAllTime ? t.guessByTeams.winnersOnlyHint : undefined}
+            onPlayAgain={onPlayAgain}
+        />
+    );
 };
 
 export const GuessByTeams = () => {
     const { t } = useLanguage();
+    const [board, setBoard] = useState<Board>('current');
     const [round, setRound] = useState(0);
 
     const handlePlayAgain = useCallback(() => {
         setRound((current) => current + 1);
     }, []);
 
+    // Switching board draws a fresh answer, so it counts as a new round.
+    const handleBoardChange = useCallback((next: Board) => {
+        setBoard(next);
+        setRound((current) => current + 1);
+    }, []);
+
+    const isAllTime = board === 'alltime';
+
     return (
         <PageShell>
-            <PageHeader title={t.guessByTeams.title} subtitle={t.guessByTeams.mode} />
+            <PageHeader
+                title={isAllTime ? t.guessByTeams.allTimeTitle : t.guessByTeams.currentTitle}
+                subtitle={isAllTime ? t.guessByTeams.allTimeMode : t.guessByTeams.currentMode}
+            />
+
+            <div className="mb-5 flex justify-center">
+                <SegmentedControl<Board>
+                    value={board}
+                    onChange={handleBoardChange}
+                    options={[
+                        { value: 'current', label: t.guessByTeams.modeCurrent },
+                        { value: 'alltime', label: t.guessByTeams.modeAllTime }
+                    ]}
+                />
+            </div>
+
             {/* The key remounts the round, which is what clears the previous board. */}
-            <Round key={round} onPlayAgain={handlePlayAgain} />
+            <Round key={`${board}-${round}`} board={board} onPlayAgain={handlePlayAgain} />
         </PageShell>
     );
 };
