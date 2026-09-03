@@ -1,0 +1,40 @@
+# F1dle — React frontend (nginx)
+#
+# The only publicly reachable app. It serves the static CRA build and proxies
+# /api/ to the private API over Flycast, so the browser only ever talks to one
+# origin.
+#
+# Deploy from this directory:  fly deploy
+
+app = "f1dle-md"
+primary_region = "cdg"
+
+[build]
+  dockerfile = "Dockerfile"
+
+  [build.args]
+    # Relative base URL: the API is reached through this app's own /api/ proxy.
+    # Baked in at build time, since CRA inlines env vars into the bundle.
+    REACT_APP_API_URL = "/api"
+
+[env]
+  # Overrides the image default (api:80, which is the docker-compose hostname).
+  API_UPSTREAM = "f1dle-api-md.flycast:80"
+
+[http_service]
+  internal_port = 80
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+  [[http_service.checks]]
+    grace_period = "10s"
+    interval = "15s"
+    timeout = "5s"
+    method = "GET"
+    path = "/"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "256mb"
